@@ -1,0 +1,203 @@
+// Get DOM elements
+const searchInputEl = document.getElementById("searchInput");
+const searchResultsContainer = document.getElementById("searchResults");
+const spinnerEl = document.getElementById("spinner");
+const sellButton = document.querySelectorAll(".btn-light")[0];
+const incampusButton = document.querySelectorAll(".btn-light")[1];
+const bookForm = document.createElement('div');
+
+// Get Current Year for Publishing Year Dropdown
+const currentYear = new Date().getFullYear();
+
+// Load published books from localStorage or initialize empty array
+let publishedBooks = JSON.parse(localStorage.getItem('publishedBooks')) || [];
+
+// SEARCH FUNCTIONALITY
+
+// Function to create and append a search result item
+function createAndAppendSearchResult(result) {
+    const {
+        title,
+        imageLink,
+        author
+    } = result;
+
+    const resultItemEl = document.createElement("div");
+    resultItemEl.classList.add("result-item");
+
+    const titleEl = document.createElement("p");
+    titleEl.textContent = title;
+    resultItemEl.appendChild(titleEl);
+
+    const imageEl = document.createElement("img");
+    imageEl.src = imageLink;
+    resultItemEl.appendChild(imageEl);
+
+    const authorName = document.createElement("p");
+    authorName.textContent = author;
+    resultItemEl.appendChild(authorName);
+
+    searchResultsContainer.appendChild(resultItemEl);
+}
+
+// Function to display search results
+function displayResults(searchResults) {
+    spinnerEl.classList.add("d-none"); // Hide spinner
+
+    if (searchResults.length === 0) {
+        searchResultsContainer.textContent = "No results found.";
+    } else {
+        for (let result of searchResults) {
+            createAndAppendSearchResult(result);
+        }
+    }
+}
+
+// Function to handle search input (triggered by Enter key)
+function searchBooks(event) {
+    if (event.key === "Enter") {
+        const searchInputValue = searchInputEl.value;
+        spinnerEl.classList.remove("d-none"); // Show spinner
+        searchResultsContainer.textContent = ""; // Clear previous results
+
+        const url = "https://apis.ccbp.in/book-store?title=" + searchInputValue;
+        const options = {
+            method: "GET"
+        };
+
+        fetch(url, options)
+            .then(response => response.json())
+            .then(data => {
+                if (data.search_results) {
+                    displayResults(data.search_results);
+                } else {
+                    displayResults([]); // Display "No results found" if there are no search results.
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching book data:", error);
+                spinnerEl.classList.add("d-none");
+                searchResultsContainer.textContent = "An error occurred while fetching data.";
+            });
+    }
+}
+
+
+// SELL & PUBLISH FUNCTIONALITY
+
+// Function to handle the "Sell" button click
+function handleSellClick() {
+    searchResultsContainer.innerHTML = "";
+    searchResultsContainer.appendChild(bookForm);
+
+    bookForm.innerHTML = `
+        <h2>Sell Your Book</h2>
+        <input type="text" id="bookTitle" placeholder="Book Title" class="form-control mb-2">
+        <input type="text" id="bookAuthor" placeholder="Author" class="form-control mb-2">
+        <select id="publishingYear" class="form-control mb-2"></select>
+        <input type="number" id="bookCost" placeholder="Cost" class="form-control mb-2">
+        <button type="button" id="publishButton" class="btn btn-primary">Publish</button>
+    `;
+
+    let publishingYearSelect = bookForm.querySelector("#publishingYear");
+    for (let i = currentYear; i >= currentYear - 100; i--) {
+        let option = document.createElement("option");
+        option.value = i;
+        option.text = i;
+        publishingYearSelect.add(option);
+    }
+}
+
+// Function to handle the "Publish" button click
+function handlePublishClick() {
+    let bookTitle = document.getElementById("bookTitle").value;
+    let bookAuthor = document.getElementById("bookAuthor").value;
+    let publishingYear = document.getElementById("publishingYear").value;
+    let bookCost = document.getElementById("bookCost").value;
+
+    // Simple input validation
+    if (!bookTitle || !bookAuthor || !bookCost) {
+        alert("Please fill out all fields.");
+        return; // Prevent publishing if fields are missing
+    }
+
+    // Create a book object and add it to the array
+    let newBook = {
+        title: bookTitle,
+        author: bookAuthor,
+        publishingYear: publishingYear,
+        cost: bookCost
+    };
+    publishedBooks.push(newBook);
+
+    // Update localStorage with the new book
+    localStorage.setItem('publishedBooks', JSON.stringify(publishedBooks));
+
+    alert("Book is published for sale!");
+
+    // Clear the form fields and refresh Incampus
+    document.getElementById("bookTitle").value = "";
+    document.getElementById("bookAuthor").value = "";
+    document.getElementById("publishingYear").value = currentYear;
+    document.getElementById("bookCost").value = "";
+
+    handleIncampusClick(); // Refresh Incampus page after publishing
+}
+
+// INCAMPUS FUNCTIONALITY
+
+// Function to handle the "Incampus" button click
+function handleIncampusClick() {
+    searchResultsContainer.innerHTML = "";
+
+    let storedBooks = JSON.parse(localStorage.getItem('publishedBooks')) || [];
+
+    if (storedBooks.length === 0) {
+        searchResultsContainer.textContent = "No books published yet.";
+    } else {
+        let bookList = document.createElement("ul");
+        bookList.classList.add("list-group");
+
+        for (let book of storedBooks) {
+            let listItem = document.createElement("li");
+            listItem.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
+
+            let bookDetails = document.createElement("div");
+            bookDetails.textContent = `${book.title} by ${book.author} (${book.publishingYear}) - $${book.cost}`;
+            listItem.appendChild(bookDetails);
+
+            let buyButton = document.createElement("button");
+            buyButton.textContent = "Buy";
+            buyButton.classList.add("btn", "btn-primary", "btn-sm");
+
+            // Add a data attribute to store book ID or other relevant info (optional)
+            // buyButton.dataset.bookId = book.id; 
+
+            buyButton.addEventListener("click", () => {
+                // Replace this with your actual purchase handling logic
+                alert(`You clicked "Buy" for "${book.title}"\n\nThis would typically initiate a purchase flow.`);
+            });
+            listItem.appendChild(buyButton);
+            bookList.appendChild(listItem);
+        }
+        searchResultsContainer.appendChild(bookList);
+    }
+}
+
+
+// EVENT LISTENERS
+
+// Attach event listeners to search input, buttons, and the publish button within the form.
+searchInputEl.addEventListener("keydown", searchBooks);
+sellButton.addEventListener("click", handleSellClick);
+incampusButton.addEventListener("click", handleIncampusClick);
+
+bookForm.addEventListener("click", function(event) {
+    if (event.target.id === "publishButton") {
+        handlePublishClick();
+    }
+});
+
+
+// Load books on initial page load
+window.addEventListener('load', handleIncampusClick);

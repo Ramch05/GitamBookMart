@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add some custom styling */
+        .bg-container {
+            background-color: #007bff;
+            /* Example background */
+            padding: 20px;
+        }
+
+        .result-item {
+            /* Style the search results */
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .result-item img {
+            max-width: 100px;
+            /* Limit image size */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-container">
+        <h1 class="text-center heading text-white font-italic">BookMart</h1>
+        <div class="d-flex flex-row justify-content-center align-items-center">
+            <input type="search" id="searchInput" class="form-control mr-2" placeholder="Type book title">
+            <button type="button" class="btn btn-light mr-2">Sell</button>
+            <button type="button" class="btn btn-light">Incampus</button>
+        </div>
+        <div class="d-none text-center" id="spinner">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    </div>
+
+    <div class="container mt-4" id="searchResults">
+        <h1>Popular Books</h1>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
